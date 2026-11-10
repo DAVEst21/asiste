@@ -108,6 +108,56 @@ test('alumnos: solo su fila de reporte e historial, sin acceso a compañeros ni 
     }
     assert.equal((await request('/student/history', { token: docente })).status, 403);
 });
+test('asistencia: guarda un lote y permite corregirlo sin duplicar registros', async () => {
+    const payload = { grupo_id: String(groups[0]._id), fecha: '2030-01-01', asistencias: students.slice(0, 3).map((row, i) => ({
+        alumno_id: String(row._id), estado: ['presente', 'retardo', 'falta'][i]
+    })) };
+    assert.equal((await request('/asistencias', { method: 'POST', token: docente, body: payload })).status, 200);
+    assert.equal((await request('/asistencias', { method: 'POST', token: docente, body: payload })).status, 200);
+    assert.equal(await Asistencia.countDocuments({ grupo_id: groups[0]._id, fecha: new Date('2030-01-01') }), 3);
+    const report = await request(`/reportes/grupo/${groups[0]._id}?startDate=2030-01-01&endDate=2030-01-01`, { token: docente });
+    assert.deepEqual(report.body.map(row => row.porcentaje).sort((a, b) => a - b), [0, 100, 100]);
+    payload.asistencias[2].estado = 'presente';
+    assert.equal((await request('/asistencias', { method: 'POST', token: docente, body: payload })).status, 200);
+    const read = await request(`/asistencias/grupo/${groups[0]._id}/fecha/2030-01-01`, { token: docente });
+    assert.equal(read.body.find(row => row.alumno_id._id === String(students[2]._id)).estado, 'presente');
+});
+test('asistencia: impide escribir a alumno y docente ajeno', async () => {
+    const body = { grupo_id: String(groups[0]._id), fecha: '2030-01-02', asistencias: [{ alumno_id: String(students[0]._id), estado: 'presente' }] };
+    for (const token of [alumno, docente2]) assert.equal((await request('/asistencias', { method: 'POST', token, body })).status, 403);
+    assert.equal(await Asistencia.countDocuments({ fecha: new Date('2030-01-02') }), 0);
+});
+test('asistencia: conserva notas omitidas y rechaza duplicados con distinta capitalización del ID', async () => {
+    const body = { grupo_id: String(groups[0]._id), fecha: '2030-01-04', asistencias: [
+        { alumno_id: String(students[0]._id), estado: 'presente', observaciones: 'Nota de prueba' }
+    ] };
+    assert.equal((await request('/asistencias', { method: 'POST', token: docente, body })).status, 200);
+    delete body.asistencias[0].observaciones;
+    body.asistencias[0].estado = 'retardo';
+    assert.equal((await request('/asistencias', { method: 'POST', token: docente, body })).status, 200);
+    const record = await Asistencia.findOne({ alumno_id: students[0]._id, fecha: new Date(body.fecha) });
+    assert.equal(record.observaciones, 'Nota de prueba');
+    body.asistencias.push({ ...body.asistencias[0], alumno_id: String(students[0]._id).toUpperCase() });
+    assert.equal((await request('/asistencias', { method: 'POST', token: docente, body })).status, 400);
+});
+test('asistencia: valida todo el lote antes de escribir, incluso alumnos de otro grupo', async () => {
+    const baseBody = { grupo_id: String(groups[0]._id), fecha: '2030-01-03' };
+    const valid = { alumno_id: String(students[0]._id), estado: 'presente' };
+    for (const [asistencias, status] of [[[], 400], [[valid, valid], 400], [[valid, { alumno_id: String(students[3]._id), estado: 'presente' }], 403],
+        [[valid, { alumno_id: String(students[1]._id), estado: 'desconocido' }], 400], [[{ ...valid, observaciones: 42 }], 400]]) {
+        assert.equal((await request('/asistencias', { method: 'POST', token: docente, body: { ...baseBody, asistencias } })).status, status);
+        assert.equal(await Asistencia.countDocuments({ fecha: new Date(baseBody.fecha) }), 0);
+    }
+    assert.equal((await request('/asistencias', { method: 'POST', token: docente, body: { ...baseBody, fecha: '2030-02-30', asistencias: [valid] } })).status, 400);
+});
+test('IDs, fechas y rutas inválidos producen errores JSON controlados', async () => {
+    assert.equal((await request('/grupos/not-an-id/alumnos', { token: docente })).status, 400);
+    assert.equal((await request('/grupos/000000000000000000009999/alumnos', { token: docente })).status, 404);
+    for (const query of ['startDate=2030-01-02', 'startDate=2030-02-01&endDate=2030-01-01', 'startDate=bad&endDate=bad']) {
+        assert.equal((await request(`/reportes/grupo/${groups[0]._id}?${query}`, { token: docente })).status, 400);
+    }
+    assert.equal((await request('/does-not-exist')).status, 404);
+});
 test('admin CRUD: fija rol docente, filtra password y conserva hashes al editar nombre', async () => {
     const result = await request('/admin/docentes', { token: admin, method: 'POST', body: {
         nombre: 'Docente Temporal', email: 'temporary@example.test', password: PASSWORD, rol: 'admin'
