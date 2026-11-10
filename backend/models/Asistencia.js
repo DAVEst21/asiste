@@ -33,4 +33,6 @@ asistenciaSchema.index({ alumno_id: 1, grupo_id: 1, fecha: 1 }, { unique: true }
 // Indice para busquedas por grupo y fecha
 asistenciaSchema.index({ grupo_id: 1, fecha: 1 });
 
+asistenciaSchema.add({ demoTag: { type: String, select: false } });
+
 module.exports = mongoose.model('Asistencia', asistenciaSchema);

@@ -1,41 +1,17 @@
 const Asistencia = require('../models/Asistencia');
 const Alumno = require('../models/Alumno');
-const bcrypt = require('bcryptjs');
+const { fail, password } = require('../utils/http');
 
-// Obtener historial completo del alumno logueado
 const getMyHistory = async (req, res) => {
-    try {
-        // req.user viene del middleware protect
-        const historial = await Asistencia.find({ alumno_id: req.user._id })
-            .sort({ fecha: -1 }); // Más reciente primero
-
-        res.json(historial);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    res.json(await Asistencia.find({ alumno_id: req.user._id }).sort({ fecha: -1 }));
 };
-
-// Cambiar contraseña del alumno
 const changePassword = async (req, res) => {
-    const { currentPassword, newPassword } = req.body;
-
-    try {
-        const alumno = await Alumno.findById(req.user._id);
-
-        // 1. Verificar password actual
-        if (!(await alumno.matchPassword(currentPassword))) {
-            return res.status(400).json({ message: 'La contraseña actual es incorrecta' });
-        }
-
-        // 2. Actualizar (Pre-save hook hará el hash)
-        alumno.password = newPassword;
-        await alumno.save();
-
-        res.json({ message: 'Contraseña actualizada correctamente' });
-
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    const alumno = await Alumno.findById(req.user._id).select('+password');
+    if (typeof req.body.currentPassword !== 'string' || !(await alumno.matchPassword(req.body.currentPassword))) {
+        fail(400, 'La contraseña actual es incorrecta.');
     }
+    alumno.password = password(req.body.newPassword);
+    await alumno.save();
+    res.json({ message: 'Contraseña actualizada correctamente.' });
 };
-
 module.exports = { getMyHistory, changePassword };

@@ -1,129 +1,89 @@
 const Usuario = require('../models/Usuario');
 const Alumno = require('../models/Alumno');
 const Grupo = require('../models/Grupo');
-const bcrypt = require('bcryptjs');
+const Asistencia = require('../models/Asistencia');
+const { fail, objectId, text, password } = require('../utils/http');
 
-// --- DOCENTES ---
-const getDocentes = async (req, res) => {
-    const docentes = await Usuario.find({ rol: 'docente' }).select('-password');
-    res.json(docentes);
-};
-
-const createDocente = async (req, res) => {
-    const { nombre, email, password } = req.body;
-    try {
-        const nuevo = await Usuario.create({ nombre, email, password, rol: 'docente' });
-        res.status(201).json(nuevo);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
-};
-
+async function find(model, id, filter = {}) {
+    const record = await model.findOne({ _id: objectId(id), ...filter });
+    if (!record) fail(404, 'Registro no encontrado.');
+    return record;
+}
+async function teacher(id) { return find(Usuario, id, { rol: 'docente' }); }
+function email(value) {
+    const result = text(value, 'Email', 150).toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result)) fail(400, 'Introduce un email válido.');
+    return result;
+}
+const getDocentes = async (req, res) => res.json(await Usuario.find({ rol: 'docente' }).sort({ nombre: 1 }));
+const createDocente = async (req, res) => res.status(201).json(await Usuario.create({
+    nombre: text(req.body.nombre, 'Nombre'), email: email(req.body.email),
+    password: password(req.body.password), rol: 'docente'
+}));
 const updateDocente = async (req, res) => {
-    const { id } = req.params;
-    const { nombre, email, password } = req.body;
-    try {
-        const docente = await Usuario.findById(id);
-        if (!docente) return res.status(404).json({ message: 'Docente no encontrado' });
-
-        docente.nombre = nombre || docente.nombre;
-        docente.email = email || docente.email;
-        if (password) docente.password = password; // Pre-save hook will hash it
-
-        await docente.save();
-        res.json(docente);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
+    const record = await teacher(req.params.id);
+    if (req.body.nombre !== undefined) record.nombre = text(req.body.nombre, 'Nombre');
+    if (req.body.email !== undefined) record.email = email(req.body.email);
+    if (req.body.password) record.password = password(req.body.password);
+    await record.save();
+    res.json(record);
 };
-
 const deleteDocente = async (req, res) => {
-    try {
-        await Usuario.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Docente eliminado' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    const record = await teacher(req.params.id);
+    if (await Grupo.exists({ docente_id: record._id })) fail(409, 'Reasigna los grupos antes de eliminar al docente.');
+    await record.deleteOne();
+    res.json({ message: 'Docente eliminado.' });
 };
-
-// --- ALUMNOS ---
-const getAlumnosAdmin = async (req, res) => {
-    const alumnos = await Alumno.find().populate('grupo_id', 'nombre');
-    res.json(alumnos);
-};
-
+const getAlumnosAdmin = async (req, res) => res.json(await Alumno.find().populate('grupo_id', 'nombre').sort({ nombre: 1 }));
 const createAlumno = async (req, res) => {
-    try {
-        const nuevo = await Alumno.create(req.body); // body: { nombre, matricula, grupo_id, password? }
-        res.status(201).json(nuevo);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
+    const grupo = await find(Grupo, req.body.grupo_id);
+    res.status(201).json(await Alumno.create({
+        nombre: text(req.body.nombre, 'Nombre'), matricula: text(req.body.matricula, 'Matrícula', 50),
+        grupo_id: grupo._id, password: password(req.body.password)
+    }));
 };
-
 const updateAlumno = async (req, res) => {
-    try {
-        const alumno = await Alumno.findById(req.params.id);
-        if (!alumno) return res.status(404).json({ message: 'Alumno no encontrado' });
-
-        // Si viene password, se setea y el pre-save lo hashea
-        if (req.body.password) alumno.password = req.body.password;
-        if (req.body.nombre) alumno.nombre = req.body.nombre;
-        if (req.body.matricula) alumno.matricula = req.body.matricula;
-        if (req.body.grupo_id) alumno.grupo_id = req.body.grupo_id;
-
-        await alumno.save();
-        res.json(alumno);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+    const record = await find(Alumno, req.params.id);
+    if (req.body.grupo_id !== undefined) {
+        const grupo = await find(Grupo, req.body.grupo_id);
+        if (String(record.grupo_id) !== String(grupo._id) && await Asistencia.exists({ alumno_id: record._id })) {
+            fail(409, 'El alumno tiene historial; el cambio de grupo requiere una migración de historial.');
+        }
+        record.grupo_id = grupo._id;
     }
+    if (req.body.nombre !== undefined) record.nombre = text(req.body.nombre, 'Nombre');
+    if (req.body.matricula !== undefined) record.matricula = text(req.body.matricula, 'Matrícula', 50);
+    if (req.body.password) record.password = password(req.body.password);
+    await record.save();
+    res.json(record);
 };
-
 const deleteAlumno = async (req, res) => {
-    try {
-        await Alumno.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Alumno eliminado' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    const record = await find(Alumno, req.params.id);
+    if (await Asistencia.exists({ alumno_id: record._id })) fail(409, 'No se elimina un alumno con historial de asistencia.');
+    await record.deleteOne();
+    res.json({ message: 'Alumno eliminado.' });
 };
-
-
-// --- GRUPOS ---
-const getGruposAdmin = async (req, res) => {
-    const grupos = await Grupo.find().populate('docente_id', 'nombre');
-    res.json(grupos);
-};
-
+const getGruposAdmin = async (req, res) => res.json(await Grupo.find().populate('docente_id', 'nombre').sort({ nombre: 1 }));
 const createGrupo = async (req, res) => {
-    try {
-        const nuevo = await Grupo.create(req.body);
-        res.status(201).json(nuevo);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
+    const docente = await teacher(req.body.docente_id);
+    res.status(201).json(await Grupo.create({ nombre: text(req.body.nombre, 'Nombre'), materia: text(req.body.materia, 'Materia'),
+        docente_id: docente._id, semestre: req.body.semestre ? text(req.body.semestre, 'Semestre', 20) : '' }));
 };
-
 const updateGrupo = async (req, res) => {
-    try {
-        const grupo = await Grupo.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        res.json(grupo);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
+    const record = await find(Grupo, req.params.id);
+    if (req.body.nombre !== undefined) record.nombre = text(req.body.nombre, 'Nombre');
+    if (req.body.materia !== undefined) record.materia = text(req.body.materia, 'Materia');
+    if (req.body.docente_id !== undefined) record.docente_id = (await teacher(req.body.docente_id))._id;
+    await record.save();
+    res.json(record);
 };
-
 const deleteGrupo = async (req, res) => {
-    try {
-        await Grupo.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Grupo eliminado' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    const record = await find(Grupo, req.params.id);
+    if (await Alumno.exists({ grupo_id: record._id }) || await Asistencia.exists({ grupo_id: record._id })) {
+        fail(409, 'No se elimina un grupo con alumnos o asistencias.');
     }
+    await record.deleteOne();
+    res.json({ message: 'Grupo eliminado.' });
 };
-
-module.exports = {
-    getDocentes, createDocente, updateDocente, deleteDocente,
-    getAlumnosAdmin, createAlumno, updateAlumno, deleteAlumno,
-    getGruposAdmin, createGrupo, updateGrupo, deleteGrupo
-};
+module.exports = { getDocentes, createDocente, updateDocente, deleteDocente, getAlumnosAdmin, createAlumno, updateAlumno,
+    deleteAlumno, getGruposAdmin, createGrupo, updateGrupo, deleteGrupo };

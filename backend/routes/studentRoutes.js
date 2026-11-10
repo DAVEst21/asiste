@@ -1,11 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const { getMyHistory, changePassword } = require('../controllers/studentController');
-const { protect } = require('../middleware/authMiddleware');
-
-router.use(protect); // Todo requiere login
-
-router.get('/history', getMyHistory);
-router.put('/password', changePassword);
-
+const router = require('express').Router();
+const controller = require('../controllers/studentController');
+const { asyncHandler } = require('../utils/http');
+const { protect, allowRoles } = require('../middleware/authMiddleware');
+router.use(protect);
+router.use(allowRoles('alumno'));
+router.get('/history', asyncHandler(controller.getMyHistory));
+router.put('/password', asyncHandler(controller.changePassword));
 module.exports = router;

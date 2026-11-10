@@ -2,7 +2,7 @@ const Asistencia = require('../models/Asistencia');
 const Alumno = require('../models/Alumno');
 const mongoose = require('mongoose');
 
-const obtenerEstadisticasGrupo = async (req, res) => {
+const obtenerEstadisticasGrupo = async (req, res, next) => {
     const { grupoId } = req.params;
 
     try {
@@ -51,7 +51,7 @@ const obtenerEstadisticasGrupo = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 

@@ -1,15 +1,21 @@
 const Asistencia = require('../models/Asistencia');
 const mongoose = require('mongoose');
+const { dateOnly, fail } = require('../utils/http');
 
-const obtenerReporteGrupo = async (req, res) => {
+const obtenerReporteGrupo = async (req, res, next) => {
     const { grupoId } = req.params;
 
     try {
+        const { startDate, endDate } = req.query;
+        if (!!startDate !== !!endDate) fail(400, 'Selecciona ambas fechas.');
+        if (startDate && dateOnly(startDate) > dateOnly(endDate)) fail(400, 'La fecha inicial debe ser anterior a la final.');
+        if (startDate) { dateOnly(startDate); dateOnly(endDate); }
         const reporte = await Asistencia.aggregate([
             // 1. Filtrar por grupo y fecha (si existe)
             {
                 $match: {
                     grupo_id: new mongoose.Types.ObjectId(grupoId),
+                    ...(req.user.rol === 'alumno' ? { alumno_id: req.user._id } : {}),
                     ...(req.query.startDate && req.query.endDate ? {
                         fecha: {
                             $gte: new Date(req.query.startDate),
@@ -72,7 +78,7 @@ const obtenerReporteGrupo = async (req, res) => {
         res.json(reporte);
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 

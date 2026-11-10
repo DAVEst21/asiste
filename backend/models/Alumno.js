@@ -14,7 +14,7 @@ const alumnoSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true,
-        default: '12345' // Default password si no se provee
+        select: false
     },
     telefono: {
         type: String
@@ -26,18 +26,20 @@ const alumnoSchema = new mongoose.Schema({
     }
 });
 
-// Encriptar password antes de guardar
+// Calcular el hash antes de guardar; no se vuelve a aplicar si no cambió.
 alumnoSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) {
-        next();
-    }
+    if (!this.isModified('password')) return next();
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
 });
+
+alumnoSchema.set('toJSON', { transform: (doc, ret) => { delete ret.password; return ret; } });
 
 // Método para comparar passwords
 alumnoSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
+
+alumnoSchema.add({ demoTag: { type: String, select: false } });
 
 module.exports = mongoose.model('Alumno', alumnoSchema);

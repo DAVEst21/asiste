@@ -19,4 +19,6 @@ const grupoSchema = new mongoose.Schema({
     }
 });
 
+grupoSchema.add({ demoTag: { type: String, select: false } });
+
 module.exports = mongoose.model('Grupo', grupoSchema);

@@ -1,82 +1,25 @@
 const Usuario = require('../models/Usuario');
 const Alumno = require('../models/Alumno');
 const jwt = require('jsonwebtoken');
+const { fail, text } = require('../utils/http');
 
-const generateToken = (id, rol) => {
-    return jwt.sign({ id, rol }, process.env.JWT_SECRET, {
-        expiresIn: '30d',
-    });
-};
-
-const registerUser = async (req, res) => {
-    const { nombre, email, password, rol } = req.body;
-
-    try {
-        const usuarioExists = await Usuario.findOne({ email });
-
-        if (usuarioExists) {
-            return res.status(400).json({ message: 'Usuario ya existe' });
-        }
-
-        const usuario = await Usuario.create({
-            nombre,
-            email,
-            password,
-            rol
-        });
-
-        if (usuario) {
-            res.status(201).json({
-                _id: usuario._id,
-                nombre: usuario.nombre,
-                email: usuario.email,
-                rol: usuario.rol,
-                token: generateToken(usuario._id, usuario.rol),
-            });
-        } else {
-            res.status(400).json({ message: 'Datos de usuario inválidos' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
+// El administrador provisiona las cuentas. No existe alta pública de personal.
+const registerUser = (req, res) => res.status(403).json({ message: 'Solicita tu cuenta a la administración de Asiste.' });
 const authUser = async (req, res) => {
-    const { email, password } = req.body; // email puede ser matricula
-
-    try {
-        // 1. Intentar buscar como Usuario (Email)
-        const usuario = await Usuario.findOne({ email });
-
-        if (usuario && (await usuario.matchPassword(password))) {
-            return res.json({
-                _id: usuario._id,
-                nombre: usuario.nombre,
-                email: usuario.email,
-                rol: usuario.rol,
-                token: generateToken(usuario._id, usuario.rol),
-            });
-        }
-
-        // 2. Intentar buscar como Alumno (Matricula)
-        const alumno = await Alumno.findOne({ matricula: email });
-
-        if (alumno && (await alumno.matchPassword(password))) {
-            return res.json({
-                _id: alumno._id,
-                nombre: alumno.nombre,
-                matricula: alumno.matricula,
-                rol: 'alumno', // Rol implícito
-                grupo_id: alumno.grupo_id,
-                token: generateToken(alumno._id, 'alumno'),
-            });
-        }
-
-        res.status(401).json({ message: 'Credenciales inválidas (Email/Matrícula o Password)' });
-
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    const identifier = text(req.body.email, 'Email o matrícula', 150);
+    const { password } = req.body;
+    if (typeof password !== 'string' || !password || Buffer.byteLength(password) > 72) fail(400, 'Introduce una contraseña válida.');
+    let account = await Usuario.findOne({ email: identifier.toLowerCase() }).select('+password');
+    let role = account?.rol;
+    if (!account || !(await account.matchPassword(password))) {
+        account = await Alumno.findOne({ matricula: identifier }).select('+password');
+        role = 'alumno';
+        if (!account || !(await account.matchPassword(password))) fail(401, 'Email, matrícula o contraseña incorrectos.');
     }
+    const token = jwt.sign({ id: String(account._id), rol: role }, req.app.locals.jwtSecret, {
+        algorithm: 'HS256', expiresIn: '2h', issuer: 'asiste', audience: 'asiste-web'
+    });
+    res.json({ _id: account._id, nombre: account.nombre, rol: role, token,
+        ...(role === 'alumno' ? { matricula: account.matricula, grupo_id: account.grupo_id } : { email: account.email }) });
 };
-
 module.exports = { registerUser, authUser };

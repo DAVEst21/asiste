@@ -1,9 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const { registrarAsistencia, obtenerAsistenciaFecha } = require('../controllers/asistenciaController');
-const { protect } = require('../middleware/authMiddleware');
-
-router.post('/', protect, registrarAsistencia);
-router.get('/grupo/:grupoId/fecha/:fecha', protect, obtenerAsistenciaFecha);
-
+const router = require('express').Router();
+const controller = require('../controllers/asistenciaController');
+const { asyncHandler } = require('../utils/http');
+const { protect, allowRoles } = require('../middleware/authMiddleware');
+const { groupAccess } = require('../middleware/groupAccess');
+router.use(protect);
+router.post('/', allowRoles('admin', 'docente'), groupAccess(), asyncHandler(controller.registrarAsistencia));
+router.get('/grupo/:grupoId/fecha/:fecha', allowRoles('admin', 'docente'), groupAccess(), asyncHandler(controller.obtenerAsistenciaFecha));
 module.exports = router;

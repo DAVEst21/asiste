@@ -7,23 +7,19 @@ const {
 } = require('../controllers/adminController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
-// Middleware para verificar rol admin
-// Nota: Necesitamos actualizar authMiddleware.js para exportar 'admin'
-// Por ahora definiré el middleware admin aquí si no existe allá, o lo importaré
-// Asumimos que lo agregaremos al middleware.
-
-router.use(protect);
+const { asyncHandler } = require('../utils/http');
+router.use(protect, admin);
 
 // rutas docentes
-router.route('/docentes').get(getDocentes).post(createDocente);
-router.route('/docentes/:id').put(updateDocente).delete(deleteDocente);
+router.route('/docentes').get(asyncHandler(getDocentes)).post(asyncHandler(createDocente));
+router.route('/docentes/:id').put(asyncHandler(updateDocente)).delete(asyncHandler(deleteDocente));
 
 // rutas alumnos
-router.route('/alumnos').get(getAlumnosAdmin).post(createAlumno);
-router.route('/alumnos/:id').put(updateAlumno).delete(deleteAlumno);
+router.route('/alumnos').get(asyncHandler(getAlumnosAdmin)).post(asyncHandler(createAlumno));
+router.route('/alumnos/:id').put(asyncHandler(updateAlumno)).delete(asyncHandler(deleteAlumno));
 
 // rutas grupos
-router.route('/grupos').get(getGruposAdmin).post(createGrupo);
-router.route('/grupos/:id').put(updateGrupo).delete(deleteGrupo);
+router.route('/grupos').get(asyncHandler(getGruposAdmin)).post(asyncHandler(createGrupo));
+router.route('/grupos/:id').put(asyncHandler(updateGrupo)).delete(asyncHandler(deleteGrupo));
 
 module.exports = router;
