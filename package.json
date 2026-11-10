@@ -1,37 +1,45 @@
 {
-    "name": "asisteuaz",
-    "version": "1.0.0",
-    "description": "Sistema de control de asistencias UAZ",
-    "main": "server.js",
-    "type": "commonjs",
-    "scripts": {
-        "start": "node server.js",
-        "dev": "vite",
-        "build": "vite build",
-        "preview": "vite preview"
-    },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
-    "dependencies": {
-        "bcryptjs": "^2.4.3",
-        "cors": "^2.8.5",
-        "dotenv": "^16.4.5",
-        "express": "^4.19.2",
-        "jsonwebtoken": "^9.0.2",
-        "jspdf": "^3.0.4",
-        "jspdf-autotable": "^5.0.2",
-        "lucide-react": "^0.378.0",
-        "mongoose": "^8.3.1",
-        "react": "^18.3.1",
-        "react-dom": "^18.3.1",
-        "xlsx": "^0.18.5"
-    },
-    "devDependencies": {
-        "@vitejs/plugin-react": "^4.2.1",
-        "autoprefixer": "^10.4.19",
-        "postcss": "^8.4.38",
-        "tailwindcss": "^3.4.3",
-        "vite": "^5.2.11"
-    }
+  "name": "asiste",
+  "version": "1.0.0",
+  "description": "Gestión de asistencia académica con roles, reportes y una demo reproducible.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "dev:server": "node --watch server.js",
+    "test": "node --test tests/*.test.js",
+    "check": "npm test && npm run build"
+  },
+  "keywords": [],
+  "author": "David Ignacio Becerra Morán",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.9",
+    "lucide-react": "^0.378.0",
+    "mongoose": "^8.3.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "autoprefixer": "^10.4.19",
+    "mongodb-memory-server-core": "10.2.3",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "vite": "^7.3.7"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22.12 <25"
+  }
 }
