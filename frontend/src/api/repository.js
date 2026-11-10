@@ -6,9 +6,9 @@ const getHeader = () => {
     };
 };
 
-const handleResponse = async (res) => {
+const handleResponse = async (res, { login = false } = {}) => {
     if (!res.ok) {
-        if (res.status === 401) {
+        if (res.status === 401 && !login) {
             sessionStorage.removeItem('asiste_user');
             window.location.reload();
             throw new Error('Sesión expirada');
@@ -26,7 +26,7 @@ export const AuthRepository = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
-        return handleResponse(res);
+        return handleResponse(res, { login: true });
     }
 };
 
