@@ -1,75 +1,137 @@
-import React, { useState, useContext } from 'react';
-import { School } from 'lucide-react';
+import React, { useContext, useState } from 'react';
+import {
+    ArrowRight,
+    BookOpenCheck,
+    CalendarCheck2,
+    Eye,
+    EyeOff,
+    LockKeyhole,
+    Users,
+} from 'lucide-react';
 import { AuthContext } from '../auth/AuthContext';
 import { AuthRepository } from '../api/repository';
+import { Brand } from './AppShell';
 
-const LoginScreen = () => {
+export default function LoginScreen() {
     const { login } = useContext(AuthContext);
-    const [identifier, setIdentifier] = useState(''); // Email o Matricula
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
+    const [visible, setVisible] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSubmit = async (event) => {
+        event.preventDefault();
         setLoading(true);
         setError('');
         try {
-            const user = await AuthRepository.login(identifier, password);
-            login(user);
+            login(await AuthRepository.login(identifier, password));
         } catch (err) {
             setError(err.message);
         } finally {
             setLoading(false);
         }
     };
-
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-            <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-                <div className="flex justify-center mb-4">
-                    <div className="bg-blue-600 p-3 rounded-xl">
-                        <School className="w-10 h-10 text-white" />
+        <div className="login-page">
+            <section className="login-story" aria-label="Acerca de Asiste">
+                <Brand light />
+                <div className="login-story-content">
+                    <span className="story-tag">
+                        <span />
+                        Gestión académica
+                    </span>
+                    <h1>
+                        Control de
+                        <br />
+                        asistencia
+                    </h1>
+                    <p>Registro por fecha, historial de asistencia y reportes por grupo.</p>
+                    <div className="story-features">
+                        <div>
+                            <CalendarCheck2 size={20} />
+                            <span>Captura y corrección de asistencias</span>
+                        </div>
+                        <div>
+                            <Users size={20} />
+                            <span>Accesos de administración, docentes y alumnos</span>
+                        </div>
+                        <div>
+                            <BookOpenCheck size={20} />
+                            <span>Reportes en PDF y Excel</span>
+                        </div>
                     </div>
                 </div>
-                <h2 className="text-3xl font-extrabold text-slate-900">Asiste</h2>
-                <p className="mt-2 text-sm text-slate-600">Asistencia académica, clara y organizada</p>
-            </div>
-
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-slate-200">
-                    <form className="space-y-6" onSubmit={handleSubmit}>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700" htmlFor="field-1">Email o Matrícula</label>
-                            <input id="field-1"
-                                type="text" required autoComplete="username"
+            </section>
+            <main className="login-main">
+                <div className="login-mobile-brand">
+                    <Brand />
+                </div>
+                <div className="login-form-container">
+                    <span className="login-lock">
+                        <LockKeyhole size={24} strokeWidth={1.7} />
+                    </span>
+                    <h2>Acceso a Asiste</h2>
+                    <p className="login-description">Ingresa a tu cuenta para continuar.</p>
+                    <form onSubmit={handleSubmit} className="login-form">
+                        <div className="form-field">
+                            <label htmlFor="login-identifier">Email o Matrícula</label>
+                            <input
+                                id="login-identifier"
+                                type="text"
+                                autoComplete="username"
+                                required
                                 value={identifier}
-                                onChange={(e) => setIdentifier(e.target.value)}
-                                className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="docente@example.test"
+                                onChange={(event) => setIdentifier(event.target.value)}
+                                placeholder="Tu email o matrícula"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700" htmlFor="field-2">Contraseña</label>
-                            <input id="field-2"
-                                type="password" required autoComplete="current-password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="••••••"
-                            />
+                        <div className="form-field">
+                            <label htmlFor="login-password">Contraseña</label>
+                            <div className="password-field">
+                                <input
+                                    id="login-password"
+                                    type={visible ? 'text' : 'password'}
+                                    autoComplete="current-password"
+                                    required
+                                    value={password}
+                                    onChange={(event) => setPassword(event.target.value)}
+                                    placeholder="Ingresa tu contraseña"
+                                />
+                                <button
+                                    type="button"
+                                    className="password-toggle"
+                                    aria-label={
+                                        visible ? 'Ocultar contraseña' : 'Mostrar contraseña'
+                                    }
+                                    aria-pressed={visible}
+                                    onClick={() => setVisible((value) => !value)}
+                                >
+                                    {visible ? <EyeOff size={19} /> : <Eye size={19} />}
+                                </button>
+                            </div>
                         </div>
-
-                        {error && <p role="alert" className="text-red-500 text-sm">{error}</p>}
-
-                        <button type="submit" disabled={loading} className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300">
+                        {error && (
+                            <p role="alert" className="message message-error">
+                                {error}
+                            </p>
+                        )}
+                        <button
+                            type="submit"
+                            className="button button-primary login-submit"
+                            disabled={loading}
+                        >
                             {loading ? 'Accediendo...' : 'Iniciar Sesión'}
+                            <ArrowRight size={17} aria-hidden="true" />
                         </button>
                     </form>
+                    <p className="login-account-note">
+                        ¿Aún no tienes acceso?
+                        <br />
+                        <span>Solicita tu cuenta a la administración.</span>
+                    </p>
                 </div>
-            </div>
+                <footer className="login-footer">Asiste · Proyecto académico personal</footer>
+            </main>
         </div>
     );
-};
-
-export default LoginScreen;
+}

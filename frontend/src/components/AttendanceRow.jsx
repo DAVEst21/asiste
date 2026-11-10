@@ -1,45 +1,42 @@
 import React from 'react';
-import { CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Check, X, Clock3 } from 'lucide-react';
+import { initials } from './AppShell';
 
-const AttendanceRow = ({ alumno, status, onUpdate }) => {
-    const statusConfig = {
-        presente: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Presente' },
-        falta: { color: 'bg-red-100 text-red-800', icon: XCircle, label: 'Falta' },
-        retardo: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, label: 'Retardo' }
-    };
-
+const statuses = [
+    { value: 'presente', label: 'Presente', icon: Check },
+    { value: 'retardo', label: 'Retardo', icon: Clock3 },
+    { value: 'falta', label: 'Falta', icon: X },
+];
+export default function AttendanceRow({ alumno, status, onUpdate, disabled = false }) {
     return (
-        <div className="flex items-center justify-between p-4 bg-white border-b border-slate-100 hover:bg-slate-50 transition-colors">
-            <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold">
-                    {alumno.nombre.charAt(0)}
-                </div>
+        <div className="attendance-row">
+            <div className="person-cell">
+                <span className="avatar">{initials(alumno.nombre)}</span>
                 <div>
-                    <p className="font-medium text-slate-900">{alumno.nombre}</p>
-                    <p className="text-xs text-slate-500">{alumno.matricula}</p>
+                    <strong>{alumno.nombre}</strong>
+                    <span>{alumno.matricula}</span>
                 </div>
             </div>
-            <div className="flex space-x-2">
-                {Object.keys(statusConfig).map((key) => {
-                    const config = statusConfig[key];
-                    const Icon = config.icon;
-                    const isActive = status === key;
-                    return (
-                        <button
-                            key={key}
-                            onClick={() => onUpdate(alumno._id, key)}
-                            className={`p-2 rounded-lg transition-all ${isActive ? config.color + ' ring-2 ring-offset-1 ring-slate-200' : 'text-slate-400 hover:bg-slate-100'}`}
-                            title={config.label}
-                            aria-label={`${config.label}: ${alumno.nombre}`}
-                            aria-pressed={isActive}
-                        >
-                            <Icon className="w-5 h-5" />
-                        </button>
-                    );
-                })}
+            <div
+                className="attendance-options"
+                role="group"
+                aria-label={`Asistencia de ${alumno.nombre}`}
+            >
+                {statuses.map(({ value, label, icon: Icon }) => (
+                    <button
+                        key={value}
+                        type="button"
+                        disabled={disabled}
+                        className={`attendance-option attendance-${value} ${status === value ? 'is-selected' : ''}`}
+                        aria-label={`${label}: ${alumno.nombre}`}
+                        aria-pressed={status === value}
+                        onClick={() => onUpdate(alumno._id, value)}
+                    >
+                        <Icon size={16} aria-hidden="true" />
+                        <span>{label}</span>
+                    </button>
+                ))}
             </div>
         </div>
     );
-};
-
-export default AttendanceRow;
+}
