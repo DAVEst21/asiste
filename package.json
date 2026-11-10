@@ -11,6 +11,8 @@
     "preview": "vite preview",
     "dev:server": "node --watch server.js",
     "test": "node --test tests/*.test.js",
+    "seed:demo": "node scripts/seed-demo.js",
+    "demo": "node scripts/start-demo.js",
     "check": "npm test && npm run build"
   },
   "keywords": [],

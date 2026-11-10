@@ -196,3 +196,22 @@ test('contraseña: exige la actual, valida longitud y solo modifica al alumno au
     await login('DEMO-1', 'NuevaDemo2026!');
     assert.equal((await Alumno.findById(students[1]._id).select('+password')).password, second.password);
 });
+test('demo: se repite sin borrar información ni reiniciar contraseñas/capturas', async () => {
+    const user = await Alumno.findById(students[0]._id).select('+password');
+    const attendance = await Asistencia.countDocuments();
+    const extra = await Usuario.create({ nombre: 'Se conserva', email: 'preserve@example.test', password: PASSWORD, rol: 'docente' });
+    const result = await seedDemo();
+    assert.equal(result.created, 0); assert.equal(await Asistencia.countDocuments(), attendance);
+    assert.equal((await Alumno.findById(user._id).select('+password')).password, user.password);
+    assert.ok(await Usuario.exists({ _id: extra._id }));
+});
+test('demo: rechaza colisiones y bases ajenas antes de insertar', async () => {
+    await Usuario.updateOne({ _id: accounts[0]._id }, { $unset: { demoTag: 1 } });
+    const count = await Usuario.countDocuments();
+    await assert.rejects(() => seedDemo(), /datos ajenos/);
+    assert.equal(await Usuario.countDocuments(), count);
+    await Usuario.updateOne({ _id: accounts[0]._id }, { $set: { demoTag: TAG } });
+    const name = mongoose.connection.name;
+    try { mongoose.connection.name = 'asiste_personal'; await assert.rejects(() => seedDemo(), /solamente/); }
+    finally { mongoose.connection.name = name; }
+});
