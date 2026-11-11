@@ -102,10 +102,13 @@ Se actualizaron dependencias heredadas con avisos de seguridad, incluyendo Expre
 
 SheetJS se instala desde el tarball oficial **0.20.3**, fijado mediante URL e integridad en el lockfile, porque el paquete publicado como `xlsx` en el registro npm conserva una versión antigua. Referencia: [instalación oficial de SheetJS](https://docs.sheetjs.com/docs/getting-started/installation/nodejs/). Para jsPDF se consultaron [sus avisos de seguridad](https://github.com/parallax/jsPDF/security/advisories).
 
+## Licencia confirmada — 10 de noviembre de 2026
+
+El autor confirmó que se conserve ISC. Se añadió el archivo `LICENSE` con su nombre y el año 2026, se enlazó desde el README y se retiró la licencia de los pendientes. Los metadatos de `package.json` y `package-lock.json` ya indicaban ISC y se conservaron. Se revisaron el texto contra la [plantilla ISC](https://choosealicense.com/licenses/isc/), la autoría y los enlaces locales; este cambio de licencia y documentación no modifica el código de la aplicación.
+
 ## Pendiente de verificar
 
 - Ejecución de `compose.yaml`: no se levantó Docker en este WSL.
 - Ejecución del workflow preparado en `.github/workflows/check.yml`: no hay repositorio remoto ni push. La sintaxis y las referencias de las acciones se revisaron, pero no existe una ejecución de GitHub Actions que se pueda declarar aprobada.
 - Firefox, WebKit, dispositivos físicos, accesibilidad exhaustiva y pruebas de carga/concurrencia.
 - Despliegue público con TLS, recuperación de contraseñas, limitación de intentos y revocación individual de sesiones.
-- Confirmación del texto de licencia antes de publicar; se conservó únicamente el metadato ISC existente.

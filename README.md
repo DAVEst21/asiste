@@ -196,4 +196,4 @@ Se mantiene JavaScript, React y Express para conservar el alcance académico. La
 
 ## Autoría y licencia
 
-Se conserva `"license": "ISC"` del `package.json` académico original. No se ha añadido un archivo de licencia ni asignado una licencia nueva durante esta preparación. Antes de publicar conviene confirmar el texto de licencia que acompañará al repositorio. Las dependencias mantienen sus propias licencias.
+Este proyecto se distribuye bajo la licencia [ISC](LICENSE), conservando la licencia indicada en el `package.json` académico original. Copyright (c) 2026 David Ignacio Becerra Morán. Las dependencias mantienen sus propias licencias.
