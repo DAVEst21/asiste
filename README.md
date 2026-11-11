@@ -7,6 +7,7 @@ Gestión de asistencia académica con cuentas de administración, docentes y alu
 ![Express 4](https://img.shields.io/badge/Express-4-333333?logo=express)
 ![MongoDB 8](https://img.shields.io/badge/MongoDB-8-47A248?logo=mongodb&logoColor=white)
 ![Tailwind CSS 3](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)
+[![Verificación](https://github.com/DAVEst21/asiste/actions/workflows/check.yml/badge.svg)](https://github.com/DAVEst21/asiste/actions/workflows/check.yml)
 
 Proyecto académico personal de **David Ignacio Becerra Morán**, estudiante de Ingeniería de Software de la Universidad Autónoma de Zacatecas. Incluye permisos por recurso, una demo aislada y pruebas reproducibles. Las cuentas, nombres y asistencias de la demo son ficticios; no representa un sistema institucional en operación.
 
@@ -60,7 +61,16 @@ En móvil, el menú se abre desde la cabecera. Los formularios admiten navegaci�
 
 ## Probar en pocos pasos
 
-Requisitos: **Node.js 22.12 o posterior dentro de la rama 22** (probado con 22.22.1), npm e internet para descargar dependencias. Ejecuta los comandos desde la raíz del proyecto.
+Requisitos: **Node.js 22.12 o posterior dentro de la rama 22** (probado con 22.22.1), npm e internet para descargar dependencias.
+
+Clona el repositorio y entra a su carpeta:
+
+```bash
+git clone https://github.com/DAVEst21/asiste.git
+cd asiste
+```
+
+Desde la raíz del proyecto, instala las dependencias, compila e inicia la demo:
 
 ```bash
 npm ci
@@ -152,7 +162,7 @@ npm run test:e2e
 
 En Linux, Chromium necesita bibliotecas del sistema. Si faltan, Playwright informa cuáles; su instalación corresponde a la configuración del equipo. Este proyecto no instala paquetes del sistema automáticamente. Puedes usar un Chromium existente mediante `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/ruta/a/chrome`.
 
-Se incluye un workflow de GitHub Actions para ejecutar estas comprobaciones después de publicar; todavía no se ha ejecutado en GitHub.
+GitHub Actions ejecuta las pruebas de API, el build, la auditoría de dependencias y los escenarios de navegador en cada push a `main` y en las solicitudes de cambio. Consulta el [estado de las ejecuciones](https://github.com/DAVEst21/asiste/actions).
 
 Las pruebas cubren login correcto/incorrecto, tokens inválidos, roles actualizados, registro público bloqueado, operaciones administrativas, acceso entre grupos, datos individuales, contraseñas y captura/corrección de asistencia. En navegador se comprueban también recarga, estados vacíos, navegación móvil y archivos exportados. Consulta [el registro de verificación](docs/VERIFICACION.md) para conocer la evidencia y los límites de la última ejecución.
 

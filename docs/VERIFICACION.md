@@ -35,6 +35,16 @@ Con autorización del autor se reorganizaron los cambios reales en commits técn
 
 No se modificó la lógica de la aplicación al reorganizar el historial. Se comprobó que el código, configuración, pruebas, lockfile y capturas finales coinciden con la versión previa; solo se actualizó la documentación del historial. No se volvió a ejecutar Docker, GitHub Actions ni la auditoría de dependencias para esta reorganización.
 
+## Publicación y verificación en GitHub — 10 de noviembre de 2026
+
+El repositorio público es [DAVEst21/asiste](https://github.com/DAVEst21/asiste). Se publicó únicamente la rama `main`; el respaldo del historial permanece local. GitHub reconoció la licencia ISC y se comprobaron el README, el archivo de licencia y las capturas principales publicados.
+
+Antes de subir el código se ejecutaron nuevamente **20 pruebas de API/configuración**, el build, **7 escenarios de navegador** y `npm audit`, que reportó **0 vulnerabilidades**. También se revisaron los nueve commits iniciales de `main` para detectar archivos locales o patrones de secretos antes del push.
+
+La [primera ejecución de GitHub Actions](https://github.com/DAVEst21/asiste/actions/runs/42946757939), correspondiente al commit `032544a`, terminó con resultado **success**. Completó la instalación con `npm ci`, las pruebas y el build, la auditoría de dependencias, la instalación de Chromium y las pruebas de navegador. Es una comprobación real en GitHub, independiente del entorno WSL local.
+
+El estado de ejecuciones posteriores se consulta en [Actions](https://github.com/DAVEst21/asiste/actions). El código publicado no implica un despliegue de la aplicación.
+
 ## Estado comprobado
 
 | Nivel | Evidencia |
@@ -46,7 +56,7 @@ No se modificó la lógica de la aplicación al reorganizar el historial. Se com
 | Arranque con configuración | `server.js` inició usando `MONGO_URI`, `JWT_SECRET` y `PORT`; `/api/health`, login y entrega del HTML del build respondieron correctamente. |
 | Seeder por CLI | Dos ejecuciones sobre MongoDB temporal llamado `asiste_demo`: la primera agregó fixtures y la segunda agregó cero cuentas/grupos. Las pruebas comprueban conservación de cuentas, hashes y capturas. |
 | Inspección visual manual | Se abrieron las capturas reales del login, resumen docente, captura de asistencia, reporte, alumno, administración y captura móvil. No son maquetas. |
-| Dependencias | La ejecución de `npm audit` del 7 de noviembre reportó **0 vulnerabilidades**. Este resultado corresponde al lockfile actual y al catálogo de avisos consultado en esa ejecución. |
+| Dependencias | La ejecución local de `npm audit` del 10 de noviembre reportó **0 vulnerabilidades**. Este resultado corresponde al lockfile actual y al catálogo de avisos consultado en esa ejecución. |
 
 El recorrido interactivo se automatizó con Playwright; no se presenta como una sesión manual en un navegador con ventana. La revisión manual corresponde a código, diferencias y capturas.
 
@@ -109,6 +119,5 @@ El autor confirmó que se conserve ISC. Se añadió el archivo `LICENSE` con su 
 ## Pendiente de verificar
 
 - Ejecución de `compose.yaml`: no se levantó Docker en este WSL.
-- Ejecución del workflow preparado en `.github/workflows/check.yml`: no hay repositorio remoto ni push. La sintaxis y las referencias de las acciones se revisaron, pero no existe una ejecución de GitHub Actions que se pueda declarar aprobada.
 - Firefox, WebKit, dispositivos físicos, accesibilidad exhaustiva y pruebas de carga/concurrencia.
 - Despliegue público con TLS, recuperación de contraseñas, limitación de intentos y revocación individual de sesiones.
